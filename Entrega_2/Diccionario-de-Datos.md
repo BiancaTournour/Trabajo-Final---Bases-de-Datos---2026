@@ -22,7 +22,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
 | `id_departamento` | Identificador del departamento | Int | - | UNIQUE, NOT NULL | - | X | - |
 | `nombre` | Nombre del departamento | VARCHAR | - | NOT NULL | - | - | - |
-| `id_provincia` | Provincia a la que pertenece | Int | - | NOT NULL | - | - | X (`Provincia`) `ON DELETE RESTRICT` |
+| `id_provincia` | Provincia a la que pertenece | Int | - | NOT NULL | - | - | X (`Provincia`)  |
 
 **Restricciones CHECK**
 
@@ -39,7 +39,7 @@
 | `id_ciudad` | Identificador de la ciudad | Int | - | UNIQUE, NOT NULL | - | X | - |
 | `nombre` | Nombre de la ciudad | VARCHAR | - | NOT NULL | - | - | - |
 | `codigo_postal` | Código postal identificador de la ciudad | Int | 1000 < x < 9432 | UNIQUE, NOT NULL | - | - | - |
-| `id_departamento` | Departamento al que pertenece | Int | - | NOT NULL | - | - | X (`Departamento`) `ON DELETE RESTRICT` |
+| `id_departamento` | Departamento al que pertenece | Int | - | NOT NULL | - | - | X (`Departamento`)  |
 
 **Restricciones CHECK**
 
@@ -56,7 +56,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
 | `id_barrio` | Identificador del barrio | Int | - | UNIQUE | - | X | - |
 | `nombre` | Nombre del barrio | VARCHAR | - | NOT NULL | - | - | - |
-| `id_ciudad` | Ciudad a la que pertenece | Int | - | NOT NULL | - | - | X (`Ciudad`) `ON DELETE RESTRICT` |
+| `id_ciudad` | Ciudad a la que pertenece | Int | - | NOT NULL | - | - | X (`Ciudad`)  |
 
 **Restricciones CHECK**
 
@@ -90,8 +90,8 @@
 | `apellido` | Apellido del paciente | VARCHAR | - | NOT NULL | - | - | - |
 | `domicilio` | Domicilio del paciente | VARCHAR | - | NOT NULL | - | - | - |
 | `fecha_nacimiento` | Fecha de nacimiento del paciente | Date | <= fecha actual | NOT NULL | - | - | - |
-| `id_barrio` | Barrio del paciente | Int | - | NOT NULL | - | - | X (`Barrio`) `ON DELETE RESTRICT` |
-| `id_obra_social` | Obra social del paciente | Int | - | NULL permitido | - | - | X (`Obra_Social`) `ON DELETE RESTRICT` |
+| `id_barrio` | Barrio del paciente | Int | - | NOT NULL | - | - | X (`Barrio`)  |
+| `id_obra_social` | Obra social del paciente | Int | - | NULL permitido | - | - | X (`Obra_Social`)  |
 | `nro_afiliado` | Número de afiliado a la obra social | Int | - | NULL permitido; obligatorio si hay obra social | - | - | - |
 
 **Restricciones CHECK**
@@ -112,7 +112,7 @@
 | `nombre` | Nombre del centro de salud | VARCHAR | - | NOT NULL | - | - | - |
 | `direccion` | Dirección del centro de salud | VARCHAR | - | NOT NULL | - | - | - |
 | `fecha_inauguracion` | Fecha de inauguración del centro | Date | <= fecha actual | NOT NULL | - | - | - |
-| `id_barrio` | Barrio al que pertenece | Int | - | NOT NULL | - | - | X (`Barrio`) `ON DELETE RESTRICT` |
+| `id_barrio` | Barrio al que pertenece | Int | - | NOT NULL | - | - | X (`Barrio`)  |
 
 **Restricciones CHECK**
 
@@ -131,7 +131,7 @@
 | `dia` | Día de la semana | Dias (`<<Enum>>`) | Lunes a Domingo | NOT NULL | - | - | - |
 | `horario_apertura` | Horario de apertura del día | Time | < horario_cierre | NOT NULL | - | - | - |
 | `horario_cierre` | Horario de cierre del día | Time | > horario_apertura | NOT NULL | - | - | - |
-| `id_centro` | Centro al que pertenece el horario | Int | - | NOT NULL | - | - | X (`Centro`) `ON DELETE RESTRICT` |
+| `id_centro` | Centro al que pertenece el horario | Int | - | NOT NULL | - | - | X (`Centro`)  |
 
 **Restricciones CHECK**
 
@@ -153,7 +153,7 @@
 | `dia` | Día de la semana | Dias (`<<Enum>>`) | Lunes a Domingo | NOT NULL | - | - | - |
 | `horario_apertura` | Horario de apertura del día | Time | < horario_cierre | NOT NULL | - | - | - |
 | `horario_cierre` | Horario de cierre del día | Time | > horario_apertura | NOT NULL | - | - | - |
-| `id_servicio` | Servicio al que pertenece el horario | Int | - | NOT NULL | - | - | X (`Servicio`) `ON DELETE RESTRICT` |
+| `id_servicio` | Servicio al que pertenece el horario | Int | - | NOT NULL | - | - | X (`Servicio`)  |
 
 **Restricciones CHECK**
 
@@ -209,8 +209,8 @@
 
 | Atributo | Descripción | Dominio | Rango | Restricciones | Valor por defecto | PK | FK (tabla referida) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
-| `nro_matricula` | Matrícula del profesional que posee la especialización | Int | - | NOT NULL | - | X | X (`Proveedor`) `ON DELETE RESTRICT` |
-| `id_especializacion` | Especialización que posee el profesional | Int | - | NOT NULL | - | X | X (`Especializacion`) `ON DELETE RESTRICT` |
+| `nro_matricula` | Matrícula del profesional que posee la especialización | Int | - | NOT NULL | - | X | X (`Proveedor`)  |
+| `id_especializacion` | Especialización que posee el profesional | Int | - | NOT NULL | - | X | X (`Especializacion`)  |
 
 La clave primaria compuesta `PRIMARY KEY (nro_matricula, id_especializacion)` garantiza que no se repita la misma especialización para un mismo proveedor.
 
@@ -230,7 +230,7 @@ La clave primaria compuesta `PRIMARY KEY (nro_matricula, id_especializacion)` ga
 | `nombre` | Nombre del tipo de servicio | VARCHAR | - | UNIQUE, NOT NULL | - | - | - |
 | `cant_medicos_asist` | Cantidad de médicos asistentes que requiere el tipo de servicio | Int | >= 0 | NOT NULL | - | - | - |
 | `cant_enferm_asist` | Cantidad de enfermeros asistentes que requiere el tipo de servicio | Int | >= 0 | NOT NULL | - | - | - |
-| `id_especializacion_requerida` | Especialización que deben tener los profesionales para operar el servicio (NULL en internación) | Int | - | NULL permitido | - | - | X (`Especializacion`) `ON DELETE RESTRICT` |
+| `id_especializacion_requerida` | Especialización que deben tener los profesionales para operar el servicio (NULL en internación) | Int | - | NULL permitido | - | - | X (`Especializacion`)  |
 
 **Restricciones CHECK**
 
@@ -250,9 +250,9 @@ La clave primaria compuesta `PRIMARY KEY (nro_matricula, id_especializacion)` ga
 | Atributo | Descripción | Dominio | Rango | Restricciones | Valor por defecto | PK | FK (tabla referida) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
 | `id_servicio` | Identificador del servicio | Int | - | NOT NULL, UNIQUE | - | X | - |
-| `id_centro` | Centro donde funciona el servicio | Int | - | NOT NULL | - | - | X (`Centro`) `ON DELETE RESTRICT` |
-| `id_tipo_servicio` | Identificador del tipo de servicio | Int | - | NOT NULL | - | - | X (`Tipo_Servicio`) `ON DELETE RESTRICT` |
-| `medico_a_cargo_matricula` | Matrícula del médico a cargo | Int | - | NOT NULL | - | - | X (`Proveedor`) `ON DELETE RESTRICT` |
+| `id_centro` | Centro donde funciona el servicio | Int | - | NOT NULL | - | - | X (`Centro`)  |
+| `id_tipo_servicio` | Identificador del tipo de servicio | Int | - | NOT NULL | - | - | X (`Tipo_Servicio`)  |
+| `medico_a_cargo_matricula` | Matrícula del médico a cargo | Int | - | NOT NULL | - | - | X (`Proveedor`)  |
 
 **Triggers asociados**
 
@@ -267,8 +267,8 @@ La clave primaria compuesta `PRIMARY KEY (nro_matricula, id_especializacion)` ga
 
 | Atributo | Descripción | Dominio | Rango | Restricciones | Valor por defecto | PK | FK (tabla referida) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
-| `id_servicio` | Servicio al que se asigna el profesional | Int | - | NOT NULL | - | X | X (`Servicio`) `ON DELETE RESTRICT` |
-| `nro_matricula` | Matrícula del profesional asignado | Int | - | NOT NULL | - | X | X (`Proveedor`) `ON DELETE RESTRICT` |
+| `id_servicio` | Servicio al que se asigna el profesional | Int | - | NOT NULL | - | X | X (`Servicio`)  |
+| `nro_matricula` | Matrícula del profesional asignado | Int | - | NOT NULL | - | X | X (`Proveedor`)  |
 | `rol` | Rol que cumple el profesional en el servicio | RolAsignacion (`<<Enum>>`) | Médico asistente, Enfermero asistente | NOT NULL | - | - | - |
 
 **Triggers asociados**
@@ -289,9 +289,9 @@ La clave primaria compuesta `PRIMARY KEY (nro_matricula, id_especializacion)` ga
 | `dia_visita` | Día en que el paciente visitó el centro | Date | <= fecha actual | NOT NULL | - | - | - |
 | `diagnostico` | Diagnóstico indicado al paciente | VARCHAR | - | NOT NULL | - | - | - |
 | `tratamiento` | Tratamiento indicado al paciente | VARCHAR | - | NOT NULL | - | - | - |
-| `paciente_dni` | Paciente atendido | Int | 1.000.000 a 99.999.999 | NOT NULL | - | - | X (`Paciente`) `ON DELETE RESTRICT` |
-| `id_servicio` | Servicio utilizado en la visita | Int | - | NOT NULL | - | - | X (`Servicio`) `ON DELETE RESTRICT` |
-| `medico_matricula` | Médico que atendió al paciente | Int | - | NOT NULL | - | - | X (`Proveedor`) `ON DELETE RESTRICT` |
+| `paciente_dni` | Paciente atendido | Int | 1.000.000 a 99.999.999 | NOT NULL | - | - | X (`Paciente`)  |
+| `id_servicio` | Servicio utilizado en la visita | Int | - | NOT NULL | - | - | X (`Servicio`)  |
+| `medico_matricula` | Médico que atendió al paciente | Int | - | NOT NULL | - | - | X (`Proveedor`)  |
 
 **Restricciones CHECK**
 
@@ -313,7 +313,7 @@ La clave primaria compuesta `PRIMARY KEY (nro_matricula, id_especializacion)` ga
 | `id_internacion` | Identificador de la internación | Int | - | UNIQUE, NOT NULL | - | X | - |
 | `fecha_ingreso` | Fecha de ingreso al establecimiento | Date | <= fecha actual | NOT NULL | - | - | - |
 | `fecha_egreso` | Fecha de egreso (NULL mientras siga internado) | Date | >= fecha_ingreso | NULL permitido | NULL | - | - |
-| `id_historia_clinica` | Visita que originó la internación | Int | - | UNIQUE, NOT NULL | - | - | X (`HistoriaClinica`) `ON DELETE RESTRICT` |
+| `id_historia_clinica` | Visita que originó la internación | Int | - | UNIQUE, NOT NULL | - | - | X (`HistoriaClinica`)  |
 
 **Restricciones CHECK**
 

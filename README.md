@@ -68,4 +68,4 @@ La estructura del repositorio se irá completando a medida que se incorporen los
 
 - [x] Entrega 1: modelo relacional y normalización.
 - [x] Entrega 2: diccionario de datos, triggers, descripción y propiedades.
-- [ ] Entrega 3: definición de consultas, vistas, restricciones, triggers, SP/funciones, usuarios y permisos, plan de poblado y plan de testing.
+- [x] Entrega 3: definición de consultas, vistas, restricciones, triggers, SP/funciones, usuarios y permisos, plan de poblado y plan de testing.

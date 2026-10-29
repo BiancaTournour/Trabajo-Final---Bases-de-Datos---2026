@@ -18,13 +18,13 @@ Esta entrega define preliminarmente la tercera sección del Trabajo Final del pr
 
 **Objetivo:** identificar los centros que ofrecen un tipo de servicio específico y se encuentran abiertos en el día y horario de ejecución de la consulta.
 
-**Implementación prevista:** una función recibirá como parámetro el tipo de servicio buscado. Se relacionarán `Tipo_Servicio → Servicio → Centro → HorarioServicio` mediante `JOIN`, utilizando `LEFT JOIN` para contemplar que no todos los servicios tienen un horario propio. Con `WHERE` se filtrarán el tipo de servicio, el día actual y las franjas que incluyan la hora actual. La hora de apertura será inclusiva y la de cierre exclusiva. El día y la hora se interpretarán según el horario de Argentina. Se agrupará por centro para evitar duplicados cuando haya más de una franja horaria en el día y se ordenará por nombre del centro.
+**Implementación prevista:** una función recibirá como parámetro el tipo de servicio buscado. Se relacionarán `Tipo_Servicio → Servicio → Centro → HorarioServicio` mediante `JOIN`, mediante `JOIN`, ya que cada horario de servicio se registra en `HorarioServicio`. Con `WHERE` se filtrarán el tipo de servicio, el día actual y las franjas que incluyan la hora actual. La hora de apertura será inclusiva y la de cierre exclusiva. El día y la hora se interpretarán según el horario de Argentina. Se agrupará por centro para evitar duplicados cuando haya más de una franja horaria en el día y se ordenará por nombre del centro.
 
 #### Consulta C: Médico con mayor cantidad de pacientes atendidos en cada centro, organizado por barrio
 
 **Objetivo:** determinar qué médico atendió a más pacientes en cada centro de salud, organizando los resultados por barrio.
 
-**Implementación prevista:** se utilizarán `COUNT` y `DISTINCT` para evitar contar pacientes repetidos. Los `JOIN` conectarán a cada médico con el centro en el que trabaja y con los pacientes atendidos, siguiendo el recorrido `Proveedor → HistoriaClinica → Servicio → Centro → Barrio`; los pacientes se relacionarán directamente desde su historia clínica. Se filtrarán los proveedores para considerar únicamente médicos, se agrupará por centro, barrio y médico con `GROUP BY` y se ordenará la cantidad de pacientes atendidos de mayor a menor con `ORDER BY DESC`.
+**Implementación prevista:** se utilizarán `COUNT` y `DISTINCT` para evitar contar pacientes repetidos. Los `JOIN` conectarán a cada médico con el centro en el que trabaja y con los pacientes atendidos, mediante `HistoriaClinica.medico_matricula`, `HistoriaClinica.id_servicio`, `Servicio.id_centro` y `Centro.id_barrio`. Se filtrarán los proveedores cuyo `tipo_profesional` sea médico y se agrupará por centro, barrio y médico. Se utilizará `COUNT(DISTINCT HistoriaClinica.paciente_dni)` para contar pacientes únicos. Para obtener el máximo de cada centro se utilizará una consulta auxiliar o una función de ventana, conservando los empates.
 
 #### Consulta D: Centro de salud con mayor cantidad de servicios en cada barrio
 
@@ -36,7 +36,7 @@ Esta entrega define preliminarmente la tercera sección del Trabajo Final del pr
 
 **Objetivo:** listar los diez pacientes con más ingresos a centros de salud en el último mes.
 
-**Implementación prevista:** se relacionarán `Paciente → Internacion → Centro` mediante `JOIN`. Con `WHERE` se seleccionarán las internaciones cuyo ingreso haya ocurrido durante el último mes, tomando como referencia `CURRENT_DATE`. Se utilizará `COUNT(Internacion.id)` para contar las internaciones por paciente y `GROUP BY` para agrupar los resultados por paciente. Finalmente, se ordenará de forma descendente por cantidad de ingresos y se limitará el resultado a diez registros mediante `LIMIT 10` o `TOP 10`, según el sistema gestor utilizado.
+**Implementación prevista:** se relacionarán `Paciente → HistoriaClinica → Internacion → Servicio → Centro` mediante `JOIN`. Con `WHERE` se seleccionarán las internaciones cuyo ingreso haya ocurrido durante el último mes, tomando como referencia `CURRENT_DATE`. Se utilizará `COUNT(Internacion.id_internacion)` para contar las internaciones por paciente y `GROUP BY` para agrupar los resultados por paciente. Finalmente, se ordenará de forma descendente por cantidad de ingresos y se limitará el resultado a diez registros mediante `LIMIT 10`.
 
 #### Consulta F: Cantidad de pacientes con menos de cinco atenciones en los últimos seis meses que están actualmente internados
 
@@ -50,43 +50,73 @@ Esta entrega define preliminarmente la tercera sección del Trabajo Final del pr
 
 **Objetivo:** consolidar la información de los pacientes que se encuentran internados actualmente.
 
-**Implementación prevista:** recorrerá las tablas `Paciente → Internacion → Centro → Barrio` y filtrará los registros mediante `WHERE fecha_egreso IS NULL`. La vista mostrará el nombre del paciente, documento, fecha de ingreso, nombre del centro de salud y barrio. Permitirá consultar la ocupación activa sin tener que repetir las uniones en cada informe.
+**Implementación prevista:** recorrerá las tablas `Paciente → HistoriaClinica → Internacion → Servicio → Centro → Barrio` y filtrará los registros mediante `WHERE fecha_egreso IS NULL`. La vista mostrará el nombre del paciente, documento, fecha de ingreso, nombre del centro de salud y barrio. Permitirá consultar la ocupación activa sin tener que repetir las uniones en cada informe.
 
 #### `Vista_Oferta_Servicios_Centro`
 
 **Objetivo:** listar los servicios disponibles en cada centro de salud.
 
-**Implementación prevista:** relacionará `Centro → Servicio → Tipo_Servicio` mediante `JOIN`. Mostrará el nombre del centro, barrio, ciudad y los tipos de servicios ofrecidos, agrupando la información para facilitar la lectura de la cobertura asistencial de cada establecimiento.
+**Implementación prevista:** relacionará `Centro → Servicio → Tipo_Servicio` mediante `JOIN`, y `Barrio → Ciudad` para obtener la ubicación. Mostrará el nombre del centro, barrio, ciudad y los tipos de servicios ofrecidos.
 
 ### A.3. Restricciones (constraints)
 
-#### `CHK_Internacion_Fechas`
+#### `CHECK_Internacion_Fechas`
 
-Se implementará como una restricción `CHECK` sobre la tabla `Internacion`. Validará que la fecha y hora de egreso sea posterior o igual a la fecha y hora de ingreso (`fecha_egreso >= fecha_ingreso`). Su objetivo es evitar inconsistencias temporales en los registros de internación.
+Se implementará como una restricción `CHECK` sobre la tabla `Internacion`. Validará que la fecha de egreso sea posterior o igual a la fecha de ingreso (`fecha_egreso >= fecha_ingreso`), permitiendo `NULL` mientras la internación continúe activa. Su objetivo es evitar inconsistencias temporales en los registros de internación.
 
-#### `CHK_HorarioServicio_Valido`
+#### `CHECK_HorarioServicio_Valido`
 
-Se implementará como una restricción `CHECK` sobre la tabla `HorarioServicio`. Verificará que la hora de apertura sea anterior a la hora de cierre (`hora_apertura < hora_cierre`), garantizando la validez de las franjas horarias definidas.
+Se implementará como una restricción `CHECK` sobre la tabla `HorarioServicio`. Verificará que `horario_apertura` sea anterior a `horario_cierre` (`horario_apertura < horario_cierre`), garantizando la validez de las franjas horarias definidas.
 
 ### A.4. Triggers (disparadores)
 
-#### `TRG_Validar_Solapamiento_Horarios`
+#### `tgr_horario_servicio_sin_superposicion`
 
-Será un trigger `BEFORE INSERT OR UPDATE` sobre `HorarioServicio`. Antes de insertar o modificar una franja horaria de un servicio en un centro determinado, verificará si existe otra franja que se solape para el mismo día y servicio. Si detecta una superposición, cancelará la operación mediante una excepción personalizada.
+Se ejecutará antes de insertar o actualizar registros en `HorarioServicio`. Verificará que no existan franjas horarias superpuestas para el mismo servicio y día. Si detecta una superposición, cancelará la operación.
 
-#### `TRG_Auditoria_Alta_Internacion`
+#### `tgr_horario_centro_sin_superposicion`
 
-Será un trigger `AFTER UPDATE` sobre `Internacion`. Se ejecutará cuando `fecha_egreso` cambie de `NULL` a un valor concreto. Registrará en la tabla de auditoría `Auditoria_Internaciones` el usuario que procesó el alta, la fecha y hora del movimiento y el identificador de la internación finalizada.
+Se ejecutará antes de insertar o actualizar registros en `HorarioCentro`. Verificará que no existan franjas horarias superpuestas para el mismo centro y día. Si detecta una superposición, cancelará la operación.
+
+#### tgr_proveedor_especializacion_impedir_baja
+Se ejecutará antes de eliminar registros de Proveedor_Especializacion. Impedirá quitar una especialización a un proveedor cuando esta sea requerida por un servicio en el que participa como profesional asignado o médico a cargo.
+
+#### tgr_tipo_servicio_impedir_cambios
+Se ejecutará antes de actualizar registros de Tipo_Servicio. Impedirá modificar la dotación o la especialización requerida cuando el tipo de servicio ya tenga servicios asociados.
+
+#### tgr_servicio_medico_a_cargo_valido
+Se ejecutará antes de insertar o actualizar registros de Servicio. Verificará que el médico a cargo sea un proveedor de tipo Médico y que posea la especialización requerida por el tipo de servicio correspondiente.
+
+#### tgr_servicio_impedir_cambios
+Se ejecutará antes de actualizar registros de Servicio. Impedirá modificar el centro o el tipo de servicio cuando existan horarios, asignaciones o historias clínicas asociadas que dependan de esa configuración.
+
+#### tgr_asignacion_servicio_profesional_valido
+Se ejecutará antes de insertar o actualizar registros de AsignacionServicio. Verificará que el profesional asignado tenga el rol correspondiente, posea la especialización requerida por el tipo de servicio y no sea el médico a cargo del mismo.
+
+#### tgr_asignacion_servicio_cupo
+Se ejecutará antes de insertar o actualizar registros de AsignacionServicio. Controlará que la cantidad de profesionales asignados no supere la dotación de médicos y enfermeros establecida para el tipo de servicio.
+
+#### tgr_asignacion_servicio_impedir_baja
+Se ejecutará antes de eliminar registros de AsignacionServicio. Impedirá eliminar la asignación de un médico que ya haya intervenido en atenciones registradas en HistoriaClinica para ese servicio.
+
+#### tgr_historia_clinica_medico_valido
+Se ejecutará antes de insertar o actualizar registros de HistoriaClinica. Verificará que el profesional interviniente sea de tipo Médico y que esté habilitado para atender en el servicio, ya sea como médico a cargo o como profesional asignado mediante AsignacionServicio.
+
+#### tgr_internacion_servicio_valido
+Se ejecutará antes de insertar o actualizar registros de Internacion. Verificará que la historia clínica asociada corresponda a una atención realizada en un servicio cuyo tipo sea Internación.
+
+#### tgr_internacion_sin_superposicion
+Se ejecutará antes de insertar o actualizar registros de Internacion. Impedirá que un mismo paciente tenga dos internaciones cuyos períodos se superpongan. También contemplará las internaciones que todavía no tengan fecha de egreso.
 
 ### A.5. Procedimientos almacenados y funciones
 
-#### `FN_Centros_Abiertos_Por_Servicio(p_tipo_servicio VARCHAR)`
+#### `FN_Centros_Abiertos_Por_Servicio(p_id_tipo_servicio INT)`
 
-Esta función encapsulará la lógica de la consulta B. Recibirá como argumento el tipo de servicio buscado y retornará una tabla con los centros de salud abiertos al momento de la ejecución. Evaluará el día de la semana y la hora actual, según el horario de Argentina, y relacionará `Tipo_Servicio → Servicio → Centro → HorarioServicio` mediante `LEFT JOIN`. Los resultados se agruparán por centro y se ordenarán por nombre.
+Esta función encapsulará la lógica de la consulta B. Recibirá como argumento el identificador del tipo de servicio (`p_id_tipo_servicio INT`) y retornará los centros que ofrecen ese tipo de servicio y cuyo horario registrado en `HorarioServicio` incluye el día y la hora de ejecución. Comparará `dia`, `horario_apertura` y `horario_cierre` con la fecha y hora actuales. Los resultados se agruparán por centro y se ordenarán por nombre.
 
-#### `SP_Registrar_Alta_Paciente(p_id_internacion INT, p_fecha_egreso TIMESTAMP)`
+#### `SP_Registrar_Alta_Paciente(p_id_internacion INT, p_fecha_egreso DATE)`
 
-Este procedimiento almacenado gestionará el alta médica de un paciente. Recibirá el identificador de la internación y la fecha de egreso. Ejecutará una transacción que primero verificará que la internación esté activa (`fecha_egreso IS NULL`), actualizará la fecha de egreso con la fecha proporcionada y confirmará la operación mediante `COMMIT`. En caso de error, realizará `ROLLBACK`.
+Este procedimiento almacenado gestionará el egreso de una internación. Recibirá el identificador de la internación y la fecha de egreso (`p_id_internacion INT`, `p_fecha_egreso DATE`). Verificará que la internación exista y continúe activa (`fecha_egreso IS NULL`) y actualizará `Internacion.fecha_egreso` con la fecha recibida. La operación se ejecutará dentro de una transacción.
 
 ## B. Definición de roles, usuarios y permisos
 
@@ -120,7 +150,7 @@ Este procedimiento almacenado gestionará el alta médica de un paciente. Recibi
   - `SELECT`, `INSERT` y `UPDATE` sobre `Paciente` e `Internacion`.
   - `SELECT` sobre `Centro`, `Barrio`, `Ciudad`, `Servicio` y `HorarioServicio`.
   - `SELECT` sobre `Vista_Pacientes_Internados_Actuales` y `Vista_Oferta_Servicios_Centro`.
-- **Restricciones:** no tendrá acceso de lectura ni escritura a `HistoriaClinica`, para resguardar la confidencialidad de los diagnósticos médicos.
+- **Restricciones:** no tendrá permisos de modificación sobre `HistoriaClinica`; el acceso de lectura se limitará a las vistas autorizadas.
 
 ### B.4. Auditor / analista estadístico
 
@@ -129,7 +159,7 @@ Este procedimiento almacenado gestionará el alta médica de un paciente. Recibi
 - **Responsabilidad:** consultar métricas de salud pública, ocupación de centros y datos de control de calidad operacional.
 - **Permisos previstos:**
   - `SELECT` sobre `Vista_Pacientes_Internados_Actuales` y `Vista_Oferta_Servicios_Centro`.
-  - `SELECT` sobre `Auditoria_Internaciones`.
+  - `SELECT` sobre `Vista_Pacientes_Internados_Actuales` y `Vista_Oferta_Servicios_Centro`.
 - **Restricciones:** tendrá acceso exclusivo de lectura, sin privilegios de `INSERT`, `UPDATE` o `DELETE`.
 
 ## C. Plan de poblado de la base de datos
@@ -140,27 +170,27 @@ Se ingresará una cantidad de información suficiente para probar todas las cons
 
 #### Nivel 1 — Tablas catálogo y geográficas
 
-Tablas sin dependencias previas:
+Tablas iniciales:
 
-- `Provincia`, `Departamento` y `Barrio`: estructura de ubicación geográfica.
-- `Tipo_Servicio` y `Especialidad`: categorías de atención médica y profesional.
+- `Provincia` y `Obra_Social`: catálogos sin dependencias.
+- `Especializacion`: catálogo de especializaciones.
 
 #### Nivel 2 — Entidades principales
 
-- Centros médicos, vinculados con su correspondiente barrio.
-- Pacientes, registrados con sus datos personales y vinculados a un barrio.
-- Proveedores, incluyendo médicos y enfermeros.
+- `Departamento`, vinculado con `Provincia`; `Ciudad`, vinculada con `Departamento`; y `Barrio`, vinculado con `Ciudad`.
+- `Centro` y `Paciente`, vinculados con `Barrio`; `Proveedor`, con los datos de médicos y enfermeros.
 
 #### Nivel 3 — Tablas de configuración y relación
 
-- `Servicio`: asociación de cada centro con los tipos de servicio que ofrece.
-- `HorarioServicio`: definición de días, horas de apertura y cierre de los servicios de cada centro.
-- `Medico_Especialidad` y `Medico_Centro`: asignación de profesionales a sus especialidades y centros de trabajo.
+- `Tipo_Servicio`, vinculado con `Especializacion`.
+- `Proveedor_Especializacion`, que relaciona profesionales y especializaciones.
+- `Servicio`, que relaciona `Centro`, `Tipo_Servicio` y el médico a cargo.
+- `HorarioCentro` y `HorarioServicio`, junto con `AsignacionServicio`.
 
 #### Nivel 4 — Tablas transaccionales e históricas
 
-- `HistoriaClinica`: registro de atenciones, diagnósticos y profesionales intervinientes para cada paciente.
-- `Internacion`: registro de ingresos y egresos hospitalarios.
+- `HistoriaClinica`: registro de atenciones, diagnósticos, pacientes, servicios y profesionales intervinientes.
+- `Internacion`: registro de ingresos y egresos vinculado con la historia clínica que originó la internación.
 
 ### C.2. Cantidad mínima estimada de datos
 
@@ -182,13 +212,24 @@ Se realizarán inserciones y actualizaciones con datos no válidos para comproba
 
 #### Pruebas de restricciones (`CHECK`)
 
-- Intentar registrar una internación con fecha de egreso anterior a la fecha de ingreso (`fecha_egreso < fecha_ingreso`) y verificar el rechazo por parte de `CHK_Internacion_Fechas`.
-- Intentar registrar un horario de atención cuya hora de apertura sea posterior o igual a la hora de cierre (`hora_apertura >= hora_cierre`) y verificar el rechazo por parte de `CHK_HorarioServicio_Valido`.
+- Intentar registrar una internación con fecha de egreso anterior a la fecha de ingreso (`fecha_egreso < fecha_ingreso`) y verificar el rechazo por parte de `CHECK_Internacion_Fechas`.
+- Intentar registrar un horario de atención cuya hora de apertura sea posterior o igual a la hora de cierre (`horario_apertura >= horario_cierre`) y verificar el rechazo por parte de `CHECK_HorarioServicio_Valido`.
 
 #### Pruebas de triggers
 
-- Intentar insertar una franja horaria que se solape con otra existente para el mismo centro y servicio. Se verificará que `TRG_Validar_Solapamiento_Horarios` cancele la operación y emita un mensaje de error personalizado.
-- Modificar `fecha_egreso` de una internación activa y comprobar que `TRG_Auditoria_Alta_Internacion` registre automáticamente el movimiento en `Auditoria_Internaciones`.
+- Intentar insertar una franja horaria que se solape con otra existente para el mismo centro y servicio. Se verificará que `tgr_horario_servicio_sin_superposicion` cancele la operación.
+- Modificar `fecha_egreso` de una internación activa y comprobar que se actualice correctamente y que se rechacen fechas anteriores a `fecha_ingreso`.
+- Insertar y actualizar franjas horarias superpuestas en HorarioCentro para un mismo centro y día. Verificar que `tgr_horario_centro_sin_superposicion` rechace las operaciones.
+- Intentar eliminar una especialización de Proveedor_Especializacion que sea requerida por un servicio en el que participa el proveedor. Verificar que `tgr_proveedor_especializacion_impedir_baja` impida la eliminación.
+- Intentar modificar un Tipo_Servicio que ya tenga servicios asociados. Verificar que `tgr_tipo_servicio_impedir_cambios` rechace la modificación.
+- Insertar o actualizar un Servicio con un médico a cargo que no cumpla los requisitos de tipo de profesional o especialización. Verificar que `tgr_servicio_medico_a_cargo_valido` rechace la operación.
+- Intentar modificar el centro o el tipo de un Servicio que tenga horarios, asignaciones o historias clínicas asociadas. Verificar que `tgr_servicio_impedir_cambios` impida la modificación.
+- Insertar o actualizar una AsignacionServicio con un profesional que no cumpla los requisitos de rol o especialización, o que ya sea el médico a cargo. Verificar que `tgr_asignacion_servicio_profesional_valido` rechace la operación.
+- Intentar superar la cantidad de profesionales permitida para un tipo de servicio mediante inserciones o actualizaciones en AsignacionServicio. Verificar que `tgr_asignacion_servicio_cupo` rechace la operación.
+- Intentar eliminar la asignación de un médico que ya haya atendido pacientes en ese servicio. Verificar que `tgr_asignacion_servicio_impedir_baja` impida la eliminación.
+- Insertar o actualizar una HistoriaClinica con un profesional que no esté habilitado para atender en el servicio. Verificar que `tgr_historia_clinica_medico_valido` rechace la operación.
+- Insertar o actualizar una Internacion cuya historia clínica no corresponda a un servicio de tipo Internación. Verificar que `tgr_internacion_servicio_valido` rechace la operación.
+- Intentar registrar internaciones superpuestas para un mismo paciente, incluyendo internaciones sin fecha de egreso. Verificar que `tgr_internacion_sin_superposicion` rechace la operación.
 
 ### D.2. Pruebas funcionales de consultas principales y vistas
 
@@ -197,8 +238,8 @@ Se ejecutarán las seis consultas principales y las vistas asociadas sobre los d
 - **Consulta A:** verificar el conteo exacto de pacientes únicos (`COUNT` y `DISTINCT`) agrupados por diagnóstico y ciudad.
 - **Consulta B y función `FN_Centros_Abiertos_Por_Servicio`:** evaluar el filtrado dinámico de los servicios abiertos según el día y la hora exacta de ejecución en Argentina.
 - **Consulta C:** comprobar la identificación del médico con mayor cantidad de pacientes atendidos en cada centro, organizada por barrio.
-- **Consulta D:** verificar qué centro o centros tienen la mayor cantidad de servicios en cada barrio y comprobar la inclusión correcta de empates mediante vistas auxiliares.
-- **Consulta E:** validar el listado de los diez pacientes con más ingresos durante el último mes, mediante `LIMIT 10` o `TOP 10`.
+- **Consulta D:** verificar qué centro o centros tienen la mayor cantidad de servicios en cada barrio y comprobar la inclusión correcta de empates.
+- **Consulta E:** validar el listado de los diez pacientes con más ingresos durante el último mes, mediante `LIMIT 10`.
 - **Consulta F:** verificar el conteo de pacientes actualmente internados (`fecha_egreso IS NULL`) que registren menos de cinco atenciones durante los últimos seis meses.
 
 ### D.3. Pruebas de roles, permisos y control de acceso (DCL)
@@ -208,4 +249,4 @@ Se probarán distintos caminos de interacción según el perfil de usuario para 
 - **Administrador (`usr_admin_db`):** confirmar el acceso irrestricto a operaciones DDL, DML y DCL.
 - **Personal médico (`usr_medico`):** confirmar los permisos de lectura y escritura sobre `HistoriaClinica`, la ejecución de `SP_Registrar_Alta_Paciente` y el bloqueo de intentos de borrado (`DELETE`) o modificación de la estructura.
 - **Personal administrativo (`usr_recepcion`):** confirmar la posibilidad de registrar y modificar pacientes e internaciones, y comprobar el bloqueo explícito del acceso a `HistoriaClinica`.
-- **Auditor (`usr_auditoria`):** confirmar el acceso exclusivo de lectura (`SELECT`) sobre las vistas y tablas de auditoría, y verificar el rechazo de intentos de inserción o modificación.
+- **Auditor (`usr_auditoria`):** confirmar el acceso exclusivo de lectura (`SELECT`) sobre las vistas y tablas autorizadas, y verificar el rechazo de intentos de inserción o modificación.

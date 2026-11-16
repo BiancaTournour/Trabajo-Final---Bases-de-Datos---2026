@@ -1,3 +1,5 @@
+-- Definición de triggers
+
 -- Horarios de centros sin superposicion
 CREATE OR REPLACE FUNCTION horario_centro_sin_superposicion()
 RETURNS TRIGGER AS $$
@@ -102,3 +104,4 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER tgr_tipo_servicio_impedir_cambios
 BEFORE UPDATE ON tipo_servicio
 FOR EACH ROW EXECUTE FUNCTION tipo_servicio_impedir_cambios();
+

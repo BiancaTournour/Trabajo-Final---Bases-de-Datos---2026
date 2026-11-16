@@ -78,34 +78,34 @@ Se ejecutará antes de insertar o actualizar registros en `HorarioServicio`. Ver
 
 Se ejecutará antes de insertar o actualizar registros en `HorarioCentro`. Verificará que no existan franjas horarias superpuestas para el mismo centro y día. Si detecta una superposición, cancelará la operación.
 
-#### tgr_proveedor_especializacion_impedir_baja
+#### `tgr_proveedor_especializacion_impedir_baja`
 Se ejecutará antes de eliminar registros de Proveedor_Especializacion. Impedirá quitar una especialización a un proveedor cuando esta sea requerida por un servicio en el que participa como profesional asignado o médico a cargo.
 
-#### tgr_tipo_servicio_impedir_cambios
+#### `tgr_tipo_servicio_impedir_cambios`
 Se ejecutará antes de actualizar registros de Tipo_Servicio. Impedirá modificar la dotación o la especialización requerida cuando el tipo de servicio ya tenga servicios asociados.
 
-#### tgr_servicio_medico_a_cargo_valido
+#### `tgr_servicio_medico_a_cargo_valido`
 Se ejecutará antes de insertar o actualizar registros de Servicio. Verificará que el médico a cargo sea un proveedor de tipo Médico y que posea la especialización requerida por el tipo de servicio correspondiente.
 
-#### tgr_servicio_impedir_cambios
+#### `tgr_servicio_impedir_cambios`
 Se ejecutará antes de actualizar registros de Servicio. Impedirá modificar el centro o el tipo de servicio cuando existan horarios, asignaciones o historias clínicas asociadas que dependan de esa configuración.
 
-#### tgr_asignacion_servicio_profesional_valido
+#### `tgr_asignacion_servicio_profesional_valido`
 Se ejecutará antes de insertar o actualizar registros de AsignacionServicio. Verificará que el profesional asignado tenga el rol correspondiente, posea la especialización requerida por el tipo de servicio y no sea el médico a cargo del mismo.
 
-#### tgr_asignacion_servicio_cupo
+#### `tgr_asignacion_servicio_cupo`
 Se ejecutará antes de insertar o actualizar registros de AsignacionServicio. Controlará que la cantidad de profesionales asignados no supere la dotación de médicos y enfermeros establecida para el tipo de servicio.
 
-#### tgr_asignacion_servicio_impedir_baja
+#### `tgr_asignacion_servicio_impedir_baja`
 Se ejecutará antes de eliminar registros de AsignacionServicio. Impedirá eliminar la asignación de un médico que ya haya intervenido en atenciones registradas en HistoriaClinica para ese servicio.
 
-#### tgr_historia_clinica_medico_valido
+#### `tgr_historia_clinica_medico_valido`
 Se ejecutará antes de insertar o actualizar registros de HistoriaClinica. Verificará que el profesional interviniente sea de tipo Médico y que esté habilitado para atender en el servicio, ya sea como médico a cargo o como profesional asignado mediante AsignacionServicio.
 
-#### tgr_internacion_servicio_valido
+#### `tgr_internacion_servicio_valido`
 Se ejecutará antes de insertar o actualizar registros de Internacion. Verificará que la historia clínica asociada corresponda a una atención realizada en un servicio cuyo tipo sea Internación.
 
-#### tgr_internacion_sin_superposicion
+#### `tgr_internacion_sin_superposicion`
 Se ejecutará antes de insertar o actualizar registros de Internacion. Impedirá que un mismo paciente tenga dos internaciones cuyos períodos se superpongan. También contemplará las internaciones que todavía no tengan fecha de egreso.
 
 ### A.5. Procedimientos almacenados y funciones

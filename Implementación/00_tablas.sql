@@ -1,4 +1,4 @@
--- Esquema Centro de Salud
+-- Esquema Centro de Salud, Tablas, Enums y Checks
 
 -- Tipos enumerados
 CREATE TYPE dias AS ENUM

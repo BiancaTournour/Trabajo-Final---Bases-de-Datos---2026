@@ -231,6 +231,7 @@ La clave primaria compuesta `PRIMARY KEY (nro_matricula, id_especializacion)` ga
 | `cant_medicos_asist` | Cantidad de médicos asistentes que requiere el tipo de servicio | Int | >= 0 | NOT NULL | - | - | - |
 | `cant_enferm_asist` | Cantidad de enfermeros asistentes que requiere el tipo de servicio | Int | >= 0 | NOT NULL | - | - | - |
 | `id_especializacion_requerida` | Especialización que deben tener los profesionales para operar el servicio (NULL en internación) | Int | - | NULL permitido | - | - | X (`Especializacion`)  |
+| `es_internacion` | Indica si el tipo de servicio corresponde al ala de internación | Boolean | TRUE / FALSE | NOT NULL | FALSE | - | - |
 
 **Restricciones CHECK**
 
@@ -287,8 +288,8 @@ La clave primaria compuesta `PRIMARY KEY (nro_matricula, id_especializacion)` ga
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
 | `id_historia_clinica` | Identificador de la historia clínica | Int | - | UNIQUE, NOT NULL | - | X | - |
 | `dia_visita` | Día en que el paciente visitó el centro | Date | <= fecha actual | NOT NULL | - | - | - |
-| `diagnostico` | Diagnóstico indicado al paciente | VARCHAR | - | NOT NULL | - | - | - |
-| `tratamiento` | Tratamiento indicado al paciente | VARCHAR | - | NOT NULL | - | - | - |
+| `diagnostico` | Diagnóstico indicado al paciente | Text | - | NOT NULL | - | - | - |
+| `tratamiento` | Tratamiento indicado al paciente | Text | - | NOT NULL | - | - | - |
 | `paciente_dni` | Paciente atendido | Int | 1.000.000 a 99.999.999 | NOT NULL | - | - | X (`Paciente`)  |
 | `id_servicio` | Servicio utilizado en la visita | Int | - | NOT NULL | - | - | X (`Servicio`)  |
 | `medico_matricula` | Médico que atendió al paciente | Int | - | NOT NULL | - | - | X (`Proveedor`)  |
@@ -323,6 +324,6 @@ La clave primaria compuesta `PRIMARY KEY (nro_matricula, id_especializacion)` ga
 
 | Trigger | Descripción | Operaciones vinculadas |
 | :--- | :--- | :--- |
-| `tgr_internacion_servicio_valido` | Verifica que la historia clínica corresponda a un servicio de tipo Internación | INSERT, UPDATE |
+| `tgr_internacion_servicio_valido` | Verifica que la historia clínica corresponda a un servicio cuyo tipo tenga `es_internacion = TRUE` (consulta a `HistoriaClinica`, `Servicio` y `Tipo_Servicio`) | INSERT, UPDATE |
 | `tgr_internacion_sin_superposicion` | Impide que un mismo paciente tenga dos internaciones superpuestas, incluida una que siga abierta (`fecha_egreso IS NULL`) | INSERT, UPDATE |
 

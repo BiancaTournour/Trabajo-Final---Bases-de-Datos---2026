@@ -29,7 +29,7 @@ classDiagram
         +ID: Int PK
         +nombre: VARCHAR
         +dirección: VARCHAR
-        +fecha_inaguracion: Date
+        +fecha_inauguracion: Date
     }
 
     class Proveedor {
@@ -51,6 +51,7 @@ classDiagram
         +nombre: VARCHAR
         +cant_Medicos_Asist: Int
         +cant_Enferm_Asist: Int
+        +es_internacion: Boolean
     }
 
     class Internacion {

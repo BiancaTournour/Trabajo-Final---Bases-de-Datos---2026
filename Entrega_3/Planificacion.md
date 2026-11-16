@@ -42,7 +42,7 @@ Esta entrega define preliminarmente la tercera sección del Trabajo Final del pr
 
 **Objetivo:** contar los pacientes que se encuentran internados en algún centro y registran menos de cinco atenciones durante los últimos seis meses.
 
-**Implementación prevista:** se combinarán las tablas `Paciente`, `Internacion` e `HistoriaClinica`. Se identificarán los pacientes actualmente internados mediante `WHERE fecha_egreso IS NULL`. Luego se relacionará `HistoriaClinica` para considerar las atenciones registradas durante los últimos seis meses. Se agrupará por paciente con `GROUP BY` y se aplicará `HAVING COUNT(HistoriaClinica.id) < 5`. Sobre el conjunto resultante se realizará un conteo global para obtener la cantidad total de pacientes que cumplen las condiciones.
+**Implementación prevista:** se combinarán las tablas `Paciente`, `Internacion` e `HistoriaClinica`. Se identificarán los pacientes actualmente internados mediante `WHERE fecha_egreso IS NULL`. Luego se relacionará `HistoriaClinica` para considerar las atenciones registradas durante los últimos seis meses. Se agrupará por paciente con `GROUP BY` y se aplicará `HAVING COUNT(HistoriaClinica.id_historia_clinica) < 5`. Sobre el conjunto resultante se realizará un conteo global para obtener la cantidad total de pacientes que cumplen las condiciones.
 
 ### A.2. Vistas
 
@@ -158,7 +158,6 @@ Este procedimiento almacenado gestionará el egreso de una internación. Recibir
 - **Usuario asociado:** `usr_auditoria`
 - **Responsabilidad:** consultar métricas de salud pública, ocupación de centros y datos de control de calidad operacional.
 - **Permisos previstos:**
-  - `SELECT` sobre `Vista_Pacientes_Internados_Actuales` y `Vista_Oferta_Servicios_Centro`.
   - `SELECT` sobre `Vista_Pacientes_Internados_Actuales` y `Vista_Oferta_Servicios_Centro`.
 - **Restricciones:** tendrá acceso exclusivo de lectura, sin privilegios de `INSERT`, `UPDATE` o `DELETE`.
 

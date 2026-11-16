@@ -1,6 +1,6 @@
--- Esquema Centro de Salud 
+-- Esquema Centro de Salud
 
--- Tipos enumerados 
+-- Tipos enumerados
 CREATE TYPE dias AS ENUM
   ('Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo');
 
@@ -8,57 +8,52 @@ CREATE TYPE tipoprofesional AS ENUM
   ('Medico', 'Enfermero');
 
 CREATE TYPE rolasignacion AS ENUM
-  ('Medico', 'Enfermero');
+  ('Medico_Asistente', 'Enfermero_Asistente');
 
---  Ubicacion 
+--  Ubicacion
 CREATE TABLE provincia (
   id_provincia INTEGER PRIMARY KEY,
-  nombre VARCHAR(45),
+  nombre VARCHAR(45) NOT NULL UNIQUE,
   CHECK (length(trim(nombre)) > 0)
 );
 
 CREATE TABLE departamento (
   id_departamento INTEGER PRIMARY KEY,
-  nombre VARCHAR(45),
-  id_provincia INTEGER REFERENCES provincia (id_provincia),
+  nombre VARCHAR(45) NOT NULL,
+  id_provincia INTEGER NOT NULL REFERENCES provincia (id_provincia),
   CHECK (length(trim(nombre)) > 0)
 );
 
 CREATE TABLE ciudad (
   id_ciudad INTEGER PRIMARY KEY,
-  nombre VARCHAR(45),
-  codigo_postal VARCHAR(10),
-  id_departamento INTEGER REFERENCES departamento (id_departamento),
+  nombre VARCHAR(45) NOT NULL,
+  codigo_postal INTEGER NOT NULL UNIQUE,
+  id_departamento INTEGER NOT NULL REFERENCES departamento (id_departamento),
   CHECK (length(trim(nombre)) > 0),
-  CHECK (
-    CASE WHEN codigo_postal ~ '^[0-9]{1,9}$'
-         THEN codigo_postal::INTEGER > 1000 AND codigo_postal::INTEGER < 9432
-         ELSE FALSE
-    END
-  )
+  CHECK (codigo_postal > 1000 AND codigo_postal < 9432)
 );
 
 CREATE TABLE barrio (
   id_barrio INTEGER PRIMARY KEY,
-  nombre VARCHAR(45),
-  id_ciudad INTEGER REFERENCES ciudad (id_ciudad),
+  nombre VARCHAR(45) NOT NULL,
+  id_ciudad INTEGER NOT NULL REFERENCES ciudad (id_ciudad),
   CHECK (length(trim(nombre)) > 0)
 );
 
---  Pacientes 
+--  Pacientes
 CREATE TABLE obra_social (
   id_obra_social INTEGER PRIMARY KEY,
-  nombre VARCHAR(20),
+  nombre VARCHAR(20) NOT NULL UNIQUE,
   CHECK (length(trim(nombre)) > 0)
 );
 
 CREATE TABLE paciente (
   dni INTEGER PRIMARY KEY,
-  nombre VARCHAR(50),
-  apellido VARCHAR(30),
-  domicilio VARCHAR(50),
-  fecha_nacimiento DATE,
-  id_barrio INTEGER REFERENCES barrio (id_barrio),
+  nombre VARCHAR(50) NOT NULL,
+  apellido VARCHAR(30) NOT NULL,
+  domicilio VARCHAR(50) NOT NULL,
+  fecha_nacimiento DATE NOT NULL,
+  id_barrio INTEGER NOT NULL REFERENCES barrio (id_barrio),
   id_obra_social INTEGER REFERENCES obra_social (id_obra_social),
   nro_afiliado INTEGER,
   CHECK (dni BETWEEN 1000000 AND 99999999),
@@ -69,41 +64,41 @@ CREATE TABLE paciente (
   )
 );
 
---  Centros 
+--  Centros
 CREATE TABLE centro (
   id_centro INTEGER PRIMARY KEY,
-  nombre VARCHAR(50),
-  direccion VARCHAR(30),
-  fecha_inauguracion DATE,
-  id_barrio INTEGER REFERENCES barrio (id_barrio),
+  nombre VARCHAR(50) NOT NULL,
+  direccion VARCHAR(30) NOT NULL,
+  fecha_inauguracion DATE NOT NULL,
+  id_barrio INTEGER NOT NULL REFERENCES barrio (id_barrio),
   CHECK (length(trim(nombre)) > 0 AND length(trim(direccion)) > 0),
   CHECK (fecha_inauguracion <= CURRENT_DATE)
 );
 
 CREATE TABLE horariocentro (
   id_horario_centro INTEGER PRIMARY KEY,
-  dia dias,
-  horario_apertura TIME,
-  horario_cierre TIME,
-  id_centro INTEGER REFERENCES centro (id_centro),
+  dia dias NOT NULL,
+  horario_apertura TIME NOT NULL,
+  horario_cierre TIME NOT NULL,
+  id_centro INTEGER NOT NULL REFERENCES centro (id_centro),
   CHECK (horario_apertura < horario_cierre)
 );
 
--- Profesionales 
+-- Profesionales
 CREATE TABLE especializacion (
   id_especializacion INTEGER PRIMARY KEY,
-  nombre VARCHAR(40),
+  nombre VARCHAR(40) NOT NULL UNIQUE,
   CHECK (length(trim(nombre)) > 0)
 );
 
 CREATE TABLE proveedor (
   nro_matricula INTEGER PRIMARY KEY,
-  tipo_profesional tipoprofesional,
-  nombre VARCHAR(30),
-  apellido VARCHAR(30),
-  telefono VARCHAR(20),
-  email VARCHAR(30),
-  fecha_nacimiento DATE,
+  tipo_profesional tipoprofesional NOT NULL,
+  nombre VARCHAR(30) NOT NULL,
+  apellido VARCHAR(30) NOT NULL,
+  telefono VARCHAR(20) NOT NULL,
+  email VARCHAR(30) NOT NULL,
+  fecha_nacimiento DATE NOT NULL,
   CHECK (nro_matricula > 0),
   CHECK (length(trim(nombre)) > 0 AND length(trim(apellido)) > 0),
   CHECK (email LIKE '%@%.%'),
@@ -116,58 +111,59 @@ CREATE TABLE proveedor_especializacion (
   PRIMARY KEY (nro_matricula, id_especializacion)
 );
 
---  Servicios 
+--  Servicios
 CREATE TABLE tipo_servicio (
   id_tipo_servicio INTEGER PRIMARY KEY,
-  nombre VARCHAR(50),
-  cant_medicos_asist INTEGER,
-  cant_enferm_asist INTEGER,
+  nombre VARCHAR(50) NOT NULL UNIQUE,
+  cant_medicos_asist INTEGER NOT NULL,
+  cant_enferm_asist INTEGER NOT NULL,
   id_especializacion_requerida INTEGER REFERENCES especializacion (id_especializacion),
+  es_internacion BOOLEAN NOT NULL DEFAULT FALSE,
   CHECK (length(trim(nombre)) > 0),
   CHECK (cant_medicos_asist >= 0 AND cant_enferm_asist >= 0)
 );
 
 CREATE TABLE servicio (
   id_servicio INTEGER PRIMARY KEY,
-  id_centro INTEGER REFERENCES centro (id_centro),
-  id_tipo_servicio INTEGER REFERENCES tipo_servicio (id_tipo_servicio),
-  medico_a_cargo_matricula INTEGER REFERENCES proveedor (nro_matricula)
+  id_centro INTEGER NOT NULL REFERENCES centro (id_centro),
+  id_tipo_servicio INTEGER NOT NULL REFERENCES tipo_servicio (id_tipo_servicio),
+  medico_a_cargo_matricula INTEGER NOT NULL REFERENCES proveedor (nro_matricula)
 );
 
 CREATE TABLE horarioservicio (
   id_horario_servicio INTEGER PRIMARY KEY,
-  dia dias,
-  horario_apertura TIME,
-  horario_cierre TIME,
-  id_servicio INTEGER REFERENCES servicio (id_servicio),
+  dia dias NOT NULL,
+  horario_apertura TIME NOT NULL,
+  horario_cierre TIME NOT NULL,
+  id_servicio INTEGER NOT NULL REFERENCES servicio (id_servicio),
   CHECK (horario_apertura < horario_cierre)
 );
 
 CREATE TABLE asignacionservicio (
   id_servicio INTEGER REFERENCES servicio (id_servicio),
   nro_matricula INTEGER REFERENCES proveedor (nro_matricula),
-  rol rolasignacion,
+  rol rolasignacion NOT NULL,
   PRIMARY KEY (id_servicio, nro_matricula)
 );
 
---  Atencion 
+--  Atencion
 CREATE TABLE historiaclinica (
   id_historia_clinica INTEGER PRIMARY KEY,
-  dia_visita DATE,
-  diagnostico TEXT,
-  tratamiento TEXT,
-  paciente_dni INTEGER REFERENCES paciente (dni),
-  id_servicio INTEGER REFERENCES servicio (id_servicio),
-  medico_matricula INTEGER REFERENCES proveedor (nro_matricula),
+  dia_visita DATE NOT NULL,
+  diagnostico TEXT NOT NULL,
+  tratamiento TEXT NOT NULL,
+  paciente_dni INTEGER NOT NULL REFERENCES paciente (dni),
+  id_servicio INTEGER NOT NULL REFERENCES servicio (id_servicio),
+  medico_matricula INTEGER NOT NULL REFERENCES proveedor (nro_matricula),
   CHECK (dia_visita <= CURRENT_DATE),
   CHECK (length(trim(diagnostico)) > 0 AND length(trim(tratamiento)) > 0)
 );
 
 CREATE TABLE internacion (
   id_internacion INTEGER PRIMARY KEY,
-  fecha_ingreso DATE,
+  fecha_ingreso DATE NOT NULL,
   fecha_egreso DATE,
-  id_historia_clinica INTEGER REFERENCES historiaclinica (id_historia_clinica),
+  id_historia_clinica INTEGER NOT NULL UNIQUE REFERENCES historiaclinica (id_historia_clinica),
   CHECK (
     fecha_ingreso <= CURRENT_DATE AND
     (fecha_egreso IS NULL OR

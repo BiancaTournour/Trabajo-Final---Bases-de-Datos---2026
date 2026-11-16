@@ -52,7 +52,7 @@ FOREIGN KEY (id_provincia) REFERENCES Provincia
 VAR BASE RELATION Ciudad (
 id_ciudad Int,
 nombre VARCHAR(45),
-codigo_postal VARCHAR(10),
+codigo_postal Int,
 id_departamento Int,
 PRIMARY KEY (id_ciudad),
 FOREIGN KEY (id_departamento) REFERENCES Departamento
@@ -167,6 +167,7 @@ nombre VARCHAR(50),
 cant_medicos_asist Int,
 cant_enferm_asist Int,
 id_especializacion_requerida Int,
+es_internacion Boolean,
 PRIMARY KEY (id_tipo_servicio),
 FOREIGN KEY (id_especializacion_requerida) REFERENCES Especializacion
 )
@@ -233,7 +234,7 @@ FOREIGN KEY (id_historia_clinica) REFERENCES HistoriaClinica
 
 - **Atributos multivaluados eliminados:** Las especializaciones de los profesionales no están como listas dentro de Proveedor, sino que se extrajeron a la relación intermedia Proveedor_Especializacion.
 - **Valores atómicos:** Todos los campos (nombre, domicilio, fechas, teléfonos) representan valores únicos indivisibles.
-- **Claves primarias:** Cada una de las 16 relaciones posee una PK única o compuesta claramente identificada.
+- **Claves primarias:** Cada una de las 17 relaciones posee una PK única o compuesta claramente identificada.
 
 ### 2. Verificación de Segunda Forma Normal (2FN)
 
@@ -241,13 +242,13 @@ FOREIGN KEY (id_historia_clinica) REFERENCES HistoriaClinica
 
 **Verificación en el Modelo:**
 
-- **Tablas con Clave Primaria Simple:** Para Provincia, Departamento, Ciudad, Barrio, Obra_Social, Paciente, Centro, Atencion, Proveedor, Especializacion, Tipo_Servicio, Servicio, HistoriaClinica e Internacion, al tener una clave de un solo atributo, la 2FN se cumple trivialmente.
+- **Tablas con Clave Primaria Simple:** Para Provincia, Departamento, Ciudad, Barrio, Obra_Social, Paciente, Centro, Proveedor, Especializacion, Tipo_Servicio, Servicio, HistoriaClinica e Internacion, al tener una clave de un solo atributo, la 2FN se cumple trivialmente.
 
 - **Tablas con Clave Primaria Compuesta:**
 
   - **Proveedor_Especializacion (nro_matricula, id_especializacion):** Todos sus componentes forman la clave primaria compuesta, por lo que no existen atributos no clave que puedan incurrir en dependencias parciales.
 
-  - **AsignacionServicio (id_servicio, nro_matricula, rol):** El atributo no clave rol depende funcionalmente de la combinación completa de (id_servicio, nro_matricula), ya que un mismo proveedor puede desempeñar roles diferentes en distintos servicios.
+  - **AsignacionServicio (id_servicio, nro_matricula):** El atributo no clave rol depende funcionalmente de la combinación completa de (id_servicio, nro_matricula), ya que un mismo proveedor puede desempeñar roles diferentes en distintos servicios.
 
 ### 3. Verificación de Tercera Forma Normal (3FN)
 

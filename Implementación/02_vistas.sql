@@ -18,3 +18,14 @@ JOIN barrio b ON b.id_barrio = c.id_barrio
 WHERE i.fecha_egreso IS NULL;
 
 -- Vista_Oferta_Servicios_Centro
+CREATE VIEW vista_oferta_servicios_centro AS
+SELECT
+  c.nombre AS centro,
+  b.nombre AS barrio,
+  ci.nombre AS ciudad,
+  ts.nombre AS tipo_servicio
+FROM centro c
+JOIN servicio s ON s.id_centro = c.id_centro
+JOIN tipo_servicio ts ON ts.id_tipo_servicio = s.id_tipo_servicio
+JOIN barrio b ON b.id_barrio = c.id_barrio
+JOIN ciudad ci ON ci.id_ciudad = b.id_ciudad;

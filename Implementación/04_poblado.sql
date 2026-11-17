@@ -257,22 +257,22 @@ INSERT INTO proveedor_especializacion (nro_matricula, id_especializacion) VALUES
 
 
 -- tipo_servicio: 15 registros
-INSERT INTO tipo_servicio (id_tipo_servicio, nombre, cant_medicos_asist, cant_enferm_asist, id_especializacion_requerida) VALUES
-    (1, 'Internación', 0, 1, 1),
-    (2, 'Cardiología', 0, 1, 2),
-    (3, 'Pediatría', 0, 1, 3),
-    (4, 'Medicina general', 0, 1, 4),
-    (5, 'Traumatología', 0, 1, 5),
-    (6, 'Dermatología', 0, 1, 6),
-    (7, 'Ginecología', 0, 1, 7),
-    (8, 'Neurología', 0, 1, 8),
-    (9, 'Oftalmología', 0, 1, 9),
-    (10, 'Odontología', 0, 1, 10),
-    (11, 'Kinesiología', 0, 1, 11),
-    (12, 'Laboratorio', 0, 1, 12),
-    (13, 'Diagnóstico por imágenes', 0, 1, 13),
-    (14, 'Salud mental', 0, 1, 14),
-    (15, 'Vacunación', 0, 1, 15);
+INSERT INTO tipo_servicio (id_tipo_servicio, nombre, cant_medicos_asist, cant_enferm_asist, id_especializacion_requerida, es_internacion) VALUES
+    (1, 'Internación', 0, 1, 1, TRUE),
+    (2, 'Cardiología', 0, 1, 2, FALSE),
+    (3, 'Pediatría', 0, 1, 3, FALSE),
+    (4, 'Medicina general', 0, 1, 4, FALSE),
+    (5, 'Traumatología', 0, 1, 5, FALSE),
+    (6, 'Dermatología', 0, 1, 6, FALSE),
+    (7, 'Ginecología', 0, 1, 7, FALSE),
+    (8, 'Neurología', 0, 1, 8, FALSE),
+    (9, 'Oftalmología', 0, 1, 9, FALSE),
+    (10, 'Odontología', 0, 1, 10, FALSE),
+    (11, 'Kinesiología', 0, 1, 11, FALSE),
+    (12, 'Laboratorio', 0, 1, 12, FALSE),
+    (13, 'Diagnóstico por imágenes', 0, 1, 13, FALSE),
+    (14, 'Salud mental', 0, 1, 14, FALSE),
+    (15, 'Vacunación', 0, 1, 15, FALSE);
 
 
 -- servicio: 15 registros
@@ -315,21 +315,21 @@ INSERT INTO horarioservicio (id_horario_servicio, dia, horario_apertura, horario
 
 -- asignacionservicio: 15 registros
 INSERT INTO asignacionservicio (id_servicio, nro_matricula, rol) VALUES
-    (1, 2001, 'Enfermero'),
-    (2, 2002, 'Enfermero'),
-    (3, 2003, 'Enfermero'),
-    (4, 2004, 'Enfermero'),
-    (5, 2005, 'Enfermero'),
-    (6, 2006, 'Enfermero'),
-    (7, 2007, 'Enfermero'),
-    (8, 2008, 'Enfermero'),
-    (9, 2009, 'Enfermero'),
-    (10, 2010, 'Enfermero'),
-    (11, 2011, 'Enfermero'),
-    (12, 2012, 'Enfermero'),
-    (13, 2013, 'Enfermero'),
-    (14, 2014, 'Enfermero'),
-    (15, 2015, 'Enfermero');
+    (1, 2001, 'Enfermero_Asistente'),
+    (2, 2002, 'Enfermero_Asistente'),
+    (3, 2003, 'Enfermero_Asistente'),
+    (4, 2004, 'Enfermero_Asistente'),
+    (5, 2005, 'Enfermero_Asistente'),
+    (6, 2006, 'Enfermero_Asistente'),
+    (7, 2007, 'Enfermero_Asistente'),
+    (8, 2008, 'Enfermero_Asistente'),
+    (9, 2009, 'Enfermero_Asistente'),
+    (10, 2010, 'Enfermero_Asistente'),
+    (11, 2011, 'Enfermero_Asistente'),
+    (12, 2012, 'Enfermero_Asistente'),
+    (13, 2013, 'Enfermero_Asistente'),
+    (14, 2014, 'Enfermero_Asistente'),
+    (15, 2015, 'Enfermero_Asistente');
 
 
 -- historiaclinica: 60 registros

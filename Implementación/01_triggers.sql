@@ -123,27 +123,34 @@ FOR EACH ROW EXECUTE FUNCTION servicio_medico_a_cargo_valido();
 CREATE OR REPLACE FUNCTION tipo_servicio_impedir_cambios()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF (
-       NEW.cant_medicos_asist IS DISTINCT FROM OLD.cant_medicos_asist
-    OR NEW.cant_enferm_asist IS DISTINCT FROM OLD.cant_enferm_asist
-    OR NEW.id_especializacion_requerida IS DISTINCT FROM OLD.id_especializacion_requerida
-  )
-  AND EXISTS (
-    SELECT 1
-    FROM servicio s
-    WHERE s.id_tipo_servicio = OLD.id_tipo_servicio
-  ) THEN
-    RAISE EXCEPTION 'No se puede modificar la dotacion, la especializacion requerida ni la marca de internacion del tipo de servicio %: ya tiene servicios creados.',
-      OLD.id_tipo_servicio;
-  END IF;
+    IF (
+           NEW.cant_medicos_asist IS DISTINCT FROM OLD.cant_medicos_asist
+        OR NEW.cant_enferm_asist IS DISTINCT FROM OLD.cant_enferm_asist
+        OR NEW.id_especializacion_requerida IS DISTINCT FROM OLD.id_especializacion_requerida
+        OR NEW.es_internacion IS DISTINCT FROM OLD.es_internacion
+    )
+    AND EXISTS (
+        SELECT 1
+        FROM servicio s
+        WHERE s.id_tipo_servicio = OLD.id_tipo_servicio
+    ) THEN
+        RAISE EXCEPTION
+            'No se puede modificar la dotacion, la especializacion requerida ni la marca de internacion del tipo de servicio %: ya tiene servicios creados.',
+            OLD.id_tipo_servicio;
+    END IF;
 
-  RETURN NEW;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+
+DROP TRIGGER IF EXISTS tgr_tipo_servicio_impedir_cambios
+ON tipo_servicio;
+
 CREATE TRIGGER tgr_tipo_servicio_impedir_cambios
 BEFORE UPDATE ON tipo_servicio
-FOR EACH ROW EXECUTE FUNCTION tipo_servicio_impedir_cambios();
+FOR EACH ROW
+EXECUTE FUNCTION tipo_servicio_impedir_cambios();
 
 -- AsignacionServicio
 CREATE OR REPLACE FUNCTION asignacion_servicio_profesional_valido()
@@ -206,44 +213,91 @@ CREATE TRIGGER tgr_asignacion_servicio_profesional_valido
 BEFORE INSERT OR UPDATE ON asignacionservicio
 FOR EACH ROW EXECUTE FUNCTION asignacion_servicio_profesional_valido();
 
--- asignacion servicio cupo
+-- Controlar la cantidad maxima de profesionales asignados a un servicio
 CREATE OR REPLACE FUNCTION asignacion_servicio_cupo()
 RETURNS TRIGGER AS $$
 DECLARE
-  v_cupo     INTEGER;
-  v_actuales INTEGER;
+    v_cupo INTEGER;
+    v_actuales INTEGER;
+    v_servicio_anterior INTEGER := NULL;
 BEGIN
-  -- Cupo permitido segun el rol que se quiere asignar
-  SELECT CASE NEW.rol
-           WHEN 'Medico_Asistente' THEN ts.cant_medicos_asist
-           ELSE ts.cant_enferm_asist
-         END
-  INTO v_cupo
-  FROM servicio s
-  JOIN tipo_servicio ts ON ts.id_tipo_servicio = s.id_tipo_servicio
-  WHERE s.id_servicio = NEW.id_servicio;
+    -- Si es una actualizacion, guardo el servicio anterior.
+    IF TG_OP = 'UPDATE' THEN
+        v_servicio_anterior := OLD.id_servicio;
+    END IF;
 
-  -- Cuantos hay ya asignados con ese rol (sin contar la fila que se esta modificando)
-  SELECT COUNT(*)
-  INTO v_actuales
-  FROM asignacionservicio a
-  WHERE a.id_servicio = NEW.id_servicio
-    AND a.rol = NEW.rol
-    AND (TG_OP = 'INSERT'
-         OR (a.id_servicio, a.nro_matricula) <> (OLD.id_servicio, OLD.nro_matricula));
+    -- Bloqueo los servicios involucrados para evitar que dos
+    -- transacciones modifiquen simultaneamente sus asignaciones.
+    -- Se bloquean en orden de ID para reducir el riesgo de deadlocks.
+    PERFORM s.id_servicio
+    FROM servicio s
+    WHERE s.id_servicio = NEW.id_servicio
+       OR s.id_servicio = v_servicio_anterior
+    ORDER BY s.id_servicio
+    FOR UPDATE;
 
-  IF v_actuales + 1 > v_cupo THEN
-    RAISE EXCEPTION 'Se supera la cantidad de % permitida para el servicio % (maximo: %).',
-      NEW.rol, NEW.id_servicio, v_cupo;
-  END IF;
+    -- Obtengo el cupo correspondiente al rol que se quiere asignar.
+    SELECT
+        CASE NEW.rol
+            WHEN 'Medico_Asistente' THEN ts.cant_medicos_asist
+            WHEN 'Enfermero_Asistente' THEN ts.cant_enferm_asist
+        END
+    INTO v_cupo
+    FROM servicio s
+    JOIN tipo_servicio ts
+        ON ts.id_tipo_servicio = s.id_tipo_servicio
+    WHERE s.id_servicio = NEW.id_servicio;
 
-  RETURN NEW;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No existe el servicio %.',
+            NEW.id_servicio;
+    END IF;
+
+    -- Cuento las asignaciones actuales del mismo rol.
+    -- En UPDATE excluyo la asignacion que se esta modificando.
+    IF TG_OP = 'UPDATE' THEN
+        SELECT COUNT(*)
+        INTO v_actuales
+        FROM asignacionservicio a
+        WHERE a.id_servicio = NEW.id_servicio
+          AND a.rol = NEW.rol
+          AND (
+                a.id_servicio,
+                a.nro_matricula
+              ) <> (
+                OLD.id_servicio,
+                OLD.nro_matricula
+              );
+    ELSE
+        SELECT COUNT(*)
+        INTO v_actuales
+        FROM asignacionservicio a
+        WHERE a.id_servicio = NEW.id_servicio
+          AND a.rol = NEW.rol;
+    END IF;
+
+    -- Verifico que la nueva asignacion no supere el cupo.
+    IF v_actuales + 1 > v_cupo THEN
+        RAISE EXCEPTION
+            'Se supera la cantidad de % permitida para el servicio % (maximo: %).',
+            NEW.rol,
+            NEW.id_servicio,
+            v_cupo;
+    END IF;
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+
+DROP TRIGGER IF EXISTS tgr_asignacion_servicio_cupo
+ON asignacionservicio;
+
 CREATE TRIGGER tgr_asignacion_servicio_cupo
 BEFORE INSERT OR UPDATE ON asignacionservicio
-FOR EACH ROW EXECUTE FUNCTION asignacion_servicio_cupo();
+FOR EACH ROW
+EXECUTE FUNCTION asignacion_servicio_cupo();
 
 -- asignacion servicio impedir baja
 CREATE OR REPLACE FUNCTION asignacion_servicio_impedir_baja()
@@ -331,39 +385,80 @@ CREATE TRIGGER tgr_internacion_servicio_valido
 BEFORE INSERT OR UPDATE ON internacion
 FOR EACH ROW EXECUTE FUNCTION internacion_servicio_valido();
 
--- internacion sin superposicion
+-- Impedir internaciones superpuestas para un mismo paciente.
+-- El bloqueo del paciente permite controlar operaciones simultaneas.
 CREATE OR REPLACE FUNCTION internacion_sin_superposicion()
 RETURNS TRIGGER AS $$
 DECLARE
-  v_dni INTEGER;
+    v_dni INTEGER;
+    v_id_excluir INTEGER := NULL;
 BEGIN
-  -- Paciente al que pertenece esta internacion
-  SELECT h.paciente_dni
-  INTO v_dni
-  FROM historiaclinica h
-  WHERE h.id_historia_clinica = NEW.id_historia_clinica;
+    -- Identifico al paciente de la historia clinica asociada.
+    SELECT h.paciente_dni
+    INTO v_dni
+    FROM historiaclinica h
+    WHERE h.id_historia_clinica = NEW.id_historia_clinica;
 
-  -- Otras internaciones del mismo paciente que se pisen con las fechas nuevas
-  IF EXISTS (
-    SELECT 1
-    FROM internacion i
-    JOIN historiaclinica h ON h.id_historia_clinica = i.id_historia_clinica
-    WHERE h.paciente_dni = v_dni
-      AND i.id_internacion <> NEW.id_internacion
-      AND i.fecha_ingreso <= COALESCE(NEW.fecha_egreso, 'infinity'::date)
-      AND COALESCE(i.fecha_egreso, 'infinity'::date) >= NEW.fecha_ingreso
-  ) THEN
-    RAISE EXCEPTION 'El paciente (DNI %) ya tiene una internacion que se superpone con el periodo indicado.',
-      v_dni;
-  END IF;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No existe la historia clinica %.',
+            NEW.id_historia_clinica;
+    END IF;
 
-  RETURN NEW;
+    -- Si se trata de una actualizacion, excluyo la internacion anterior.
+    IF TG_OP = 'UPDATE' THEN
+        v_id_excluir := OLD.id_internacion;
+    END IF;
+
+    -- Bloqueo la fila del paciente.
+    -- Otra transaccion que intente registrar una internacion
+    -- para el mismo paciente debera esperar.
+    PERFORM 1
+    FROM paciente p
+    WHERE p.dni = v_dni
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No existe el paciente con DNI %.',
+            v_dni;
+    END IF;
+
+    -- Verifico si existe otra internacion del mismo paciente
+    -- cuyos periodos se superpongan.
+    IF EXISTS (
+        SELECT 1
+        FROM internacion i
+        JOIN historiaclinica h
+            ON h.id_historia_clinica = i.id_historia_clinica
+        WHERE h.paciente_dni = v_dni
+          AND i.id_internacion IS DISTINCT FROM v_id_excluir
+          AND i.fecha_ingreso <= COALESCE(
+                NEW.fecha_egreso,
+                'infinity'::date
+              )
+          AND COALESCE(
+                i.fecha_egreso,
+                'infinity'::date
+              ) >= NEW.fecha_ingreso
+    ) THEN
+        RAISE EXCEPTION
+            'El paciente (DNI %) ya tiene una internacion que se superpone con el periodo indicado.',
+            v_dni;
+    END IF;
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+
+DROP TRIGGER IF EXISTS tgr_internacion_sin_superposicion
+ON internacion;
+
 CREATE TRIGGER tgr_internacion_sin_superposicion
 BEFORE INSERT OR UPDATE ON internacion
-FOR EACH ROW EXECUTE FUNCTION internacion_sin_superposicion();
+FOR EACH ROW
+EXECUTE FUNCTION internacion_sin_superposicion();
 
 -- imperdir cambios
 CREATE OR REPLACE FUNCTION servicio_impedir_cambios()

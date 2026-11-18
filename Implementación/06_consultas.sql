@@ -126,19 +126,28 @@ ORDER BY
     p.nombre
 LIMIT 10;
 
--- Consulta F: Pacientes internados con menos de cinco atenciones
+-- Consulta F: Cantidad de pacientes con menos de cinco atenciones
+-- en los ultimos seis meses que estan actualmente internados
+
 WITH pacientes_internados AS (
+    SELECT DISTINCT
+        hc.paciente_dni
+    FROM internacion i
+    JOIN historiaclinica hc
+        ON hc.id_historia_clinica = i.id_historia_clinica
+    WHERE i.fecha_egreso IS NULL
+),
+atenciones_por_paciente AS (
     SELECT
         p.dni,
         p.nombre,
         p.apellido,
         COUNT(hc.id_historia_clinica) AS cantidad_atenciones
-    FROM paciente p
-    JOIN historiaclinica hc
+    FROM pacientes_internados pi
+    JOIN paciente p
+        ON p.dni = pi.paciente_dni
+    LEFT JOIN historiaclinica hc
         ON hc.paciente_dni = p.dni
-    JOIN internacion i
-        ON i.id_historia_clinica = hc.id_historia_clinica
-    WHERE i.fecha_egreso IS NULL 
         AND hc.dia_visita >= CURRENT_DATE - INTERVAL '6 months'
         AND hc.dia_visita <= CURRENT_DATE
     GROUP BY
@@ -147,5 +156,5 @@ WITH pacientes_internados AS (
         p.apellido
     HAVING COUNT(hc.id_historia_clinica) < 5
 )
-SELECT COUNT (*) AS total_pacientes
-FROM pacientes_internados;
+SELECT COUNT(*) AS total_pacientes
+FROM atenciones_por_paciente;

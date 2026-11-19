@@ -17,7 +17,7 @@ ORDER BY ci.nombre;
 
 -- Consulta B: Centros de salud que ofrecen un servicio determinado y están abiertos al momento de la consulta
 SELECT *
-FROM fn_centros_abiertos_por_servicio(11); --Para el servicio con id 11, reemplazar con el id del servicio deseado, si sale sin data es porque no hay centro abierto en ese momento para ese servicio
+FROM fn_centros_abiertos_por_servicio(1); --Para el servicio con id n, reemplazar con el id del servicio deseado, si sale sin data es porque no hay centro abierto en ese momento para ese servicio
 
 
 -- Consulta C: Médico con mayor cantidad de pacientes por centro

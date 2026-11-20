@@ -27,11 +27,11 @@ GRANT rol_auditor TO usr_auditoria;
 -- 4. PERMISOS SOBRE LA BASE DE DATOS
 
 -- Permisos administrativos
-GRANT ALL PRIVILEGES ON DATABASE centros_de_salud
+GRANT ALL PRIVILEGES ON DATABASE "Centro-de-Salud"
 TO rol_admin;
 
 -- Permiso de conexión para los demás perfiles
-GRANT CONNECT ON DATABASE centros_de_salud
+GRANT CONNECT ON DATABASE "Centro-de-Salud"
 TO rol_medico, rol_administrativo, rol_auditor;
 
 
@@ -190,3 +190,33 @@ GRANT SELECT, INSERT, UPDATE ON TABLES TO rol_medico;
 ALTER DEFAULT PRIVILEGES FOR ROLE rol_admin
 IN SCHEMA public
 GRANT SELECT, INSERT, UPDATE ON TABLES TO rol_administrativo;
+
+-- 12. PROPIEDAD DE LOS OBJETOS
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN
+        SELECT c.relname, c.relkind
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public' AND c.relkind IN ('r', 'v')
+    LOOP
+        EXECUTE format('ALTER %s %I OWNER TO rol_admin',
+                       CASE r.relkind WHEN 'v' THEN 'VIEW' ELSE 'TABLE' END, r.relname);
+    END LOOP;
+
+    FOR r IN
+        SELECT p.oid::regprocedure AS firma, p.prokind
+        FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+    LOOP
+        EXECUTE format('ALTER %s %s OWNER TO rol_admin',
+                       CASE r.prokind WHEN 'p' THEN 'PROCEDURE' ELSE 'FUNCTION' END, r.firma);
+    END LOOP;
+END $$;
+
+ALTER TYPE dias OWNER TO rol_admin;
+ALTER TYPE tipoprofesional OWNER TO rol_admin;
+ALTER TYPE rolasignacion OWNER TO rol_admin;

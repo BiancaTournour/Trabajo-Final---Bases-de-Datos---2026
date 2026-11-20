@@ -323,7 +323,10 @@ FOR EACH ROW EXECUTE FUNCTION asignacion_servicio_impedir_baja();
 
 -- historia clinica medico valido
 CREATE OR REPLACE FUNCTION historia_clinica_medico_valido()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   -- 1) Quien atiende debe ser Medico
   IF NOT EXISTS (
@@ -363,7 +366,10 @@ FOR EACH ROW EXECUTE FUNCTION historia_clinica_medico_valido();
 
 -- internacion servicio valido
 CREATE OR REPLACE FUNCTION internacion_servicio_valido()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1
@@ -388,7 +394,10 @@ FOR EACH ROW EXECUTE FUNCTION internacion_servicio_valido();
 -- Impedir internaciones superpuestas para un mismo paciente.
 -- El bloqueo del paciente permite controlar operaciones simultaneas.
 CREATE OR REPLACE FUNCTION internacion_sin_superposicion()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
     v_dni INTEGER;
     v_id_excluir INTEGER := NULL;

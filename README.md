@@ -85,12 +85,12 @@ La estructura del repositorio se irá completando a medida que se incorporen los
 Antes de ejecutar los archivos del proyecto, crear una base de datos llamada:
 
 ```sql
-CREATE DATABASE centros_de_salud;
+CREATE DATABASE Centro-de-Salud;
 ```
 
-Luego, conectarse a `centros_de_salud`. **Todos los archivos SQL del proyecto deben ejecutarse sobre esa misma base de datos**, salvo que se indique lo contrario.
+Luego, conectarse a `Centro-de-Salud`. **Todos los archivos SQL del proyecto deben ejecutarse sobre esa misma base de datos**, salvo que se indique lo contrario.
 
-En pgAdmin, seleccionar la base de datos `centros_de_salud` y abrir una ventana de Query Tool para ejecutar los scripts.
+En pgAdmin, seleccionar la base de datos `Centro-de-Salud` y abrir una ventana de Query Tool para ejecutar los scripts.
 
 ## 2. Orden de ejecución de los archivos
 
@@ -152,7 +152,7 @@ Los scripts de prueba pueden contener operaciones de inserción, actualización 
 ## 6. Consideraciones importantes
 
 - Mantener el orden de ejecución indicado para evitar errores por dependencias entre objetos.
-- Ejecutar todos los scripts sobre la base `centros_de_salud`.
+- Ejecutar todos los scripts sobre la base `Centro-de-Salud`.
 - El archivo `04_poblado.sql` contiene datos ficticios para pruebas; no representa información real de pacientes ni profesionales.
 - Si se vuelve a ejecutar el poblado sobre tablas que ya contienen esos registros, pueden producirse errores por claves primarias o restricciones `UNIQUE`.
 - Las consultas que dependen de fechas, horarios o de la hora actual pueden devolver resultados diferentes según el momento de ejecución.

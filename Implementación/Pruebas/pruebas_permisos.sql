@@ -13,7 +13,7 @@
 -- Todo corre dentro de una transaccion que termina en ROLLBACK:
 -- la base queda como estaba. Si el script se corta, ejecutar ROLLBACK;
 -- Debe ejecutarse completo y en una sola sesion. Probado con psql:
---   psql -U postgres -d centros_de_salud -f pruebas_permisos.sql
+--   psql -U postgres -d Centro-de-Salud -f pruebas_permisos.sql
 
 BEGIN;
 
